@@ -39,7 +39,7 @@ function Search() {
         console.error("Error fetching trivia questions:", error);
         setLoading(false);
       });
-  }, [amount]);
+  }, [amount, category]);
 
   const shuffle = (array: string[]) => {
     return array.sort(() => Math.random() - 0.5);
