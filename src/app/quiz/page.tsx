@@ -8,6 +8,7 @@ function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const amount = Number(searchParams.get("amount"));
+  const category = Number(searchParams.get("category"));
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -17,7 +18,9 @@ function Search() {
 
   // Get the query parameter from the URL
   useEffect(() => {
-    fetch(`https://opentdb.com/api.php?amount=${amount}&type=multiple`)
+    fetch(
+      `https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple`,
+    )
       .then((response) => response.json())
       .then((data) => {
         const shuffledData = data.results.map((question: TriviaQuestion) => ({
@@ -72,13 +75,28 @@ function Search() {
   };
 
   const handleSubmit = () => {
+    // Create a results object to store relevant data
+    const results = questions.map((question) => ({
+      question: question.question,
+      correct_answer: question.correct_answer,
+      chosen_answer: question.chosen_answer,
+    }));
+
+    // Calculate the score
     for (let i = 0; i < numOfQuestions.current; i++) {
       if (questions[i].chosen_answer === questions[i].correct_answer) {
         score.current = score.current + 1;
       }
     }
 
-    router.push(`/results?score=${score.current}&amount=${amount}`, {
+    const finalScore = Math.round((score.current / amount) * 100);
+
+    // Store the results and score in local storage
+    localStorage.setItem("triviaResults", JSON.stringify(results));
+    localStorage.setItem("triviaScore", finalScore.toString());
+
+    // Navigate to the results page
+    router.push(`/results?score=${finalScore}&amount=${amount}`, {
       scroll: false,
     });
   };
@@ -105,7 +123,7 @@ function Search() {
           !loading ? "block" : "hidden"
         } mx-auto mt-8 flex max-w-4xl flex-col gap-4 p-4 text-white`}
       >
-        <div className="text-3xl font-semibold text-white">Trivia Quiz</div>
+        <div className="text-4xl font-semibold text-white">Trivia Quiz</div>
 
         {questions.map((question, index) => (
           <Question
