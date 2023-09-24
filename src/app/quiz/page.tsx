@@ -7,19 +7,21 @@ import { TriviaQuestion } from "@/app/my-types";
 function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const amount = Number(searchParams.get("amount"));
+  const difficulty = searchParams.get("difficulty");
   const category = Number(searchParams.get("category"));
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const numOfQuestions = useRef<number>(amount);
+  const numOfQuestions: number = 10;
   const answered = useRef<number>(0);
   const score = useRef<number>(0);
 
   // Get the query parameter from the URL
   useEffect(() => {
     fetch(
-      `https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple`,
+      `https://opentdb.com/api.php?amount=10&category=${category}&type=multiple${
+        difficulty ? "&difficulty=" : ""
+      }`,
     )
       .then((response) => response.json())
       .then((data) => {
@@ -39,7 +41,7 @@ function Search() {
         console.error("Error fetching trivia questions:", error);
         setLoading(false);
       });
-  }, [amount, category]);
+  }, [difficulty, category]);
 
   const shuffle = (array: string[]) => {
     return array.sort(() => Math.random() - 0.5);
@@ -83,20 +85,20 @@ function Search() {
     }));
 
     // Calculate the score
-    for (let i = 0; i < numOfQuestions.current; i++) {
+    for (let i = 0; i < numOfQuestions; i++) {
       if (questions[i].chosen_answer === questions[i].correct_answer) {
         score.current = score.current + 1;
       }
     }
 
-    const finalScore = Math.round((score.current / amount) * 100);
+    const finalScore = Math.round((score.current / numOfQuestions) * 100);
 
     // Store the results and score in local storage
     localStorage.setItem("triviaResults", JSON.stringify(results));
     localStorage.setItem("triviaScore", finalScore.toString());
 
     // Navigate to the results page
-    router.push(`/results?score=${finalScore}&amount=${amount}`, {
+    router.push(`/results`, {
       scroll: false,
     });
   };
@@ -136,11 +138,11 @@ function Search() {
 
         <button
           className={`${
-            answered.current === numOfQuestions.current
+            answered.current === numOfQuestions
               ? "cursor-pointer transition md:hover:border-transparent md:hover:bg-blue-500"
               : "cursor-not-allowed border-neutral-600 text-neutral-600"
           } ml-auto w-full text-center md:w-1/4`}
-          disabled={answered.current < numOfQuestions.current ? true : false}
+          disabled={answered.current < numOfQuestions ? true : false}
           onClick={handleSubmit}
         >
           Submit
